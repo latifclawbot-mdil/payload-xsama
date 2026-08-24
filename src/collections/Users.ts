@@ -6,29 +6,10 @@ export const Users: CollectionConfig = {
   admin: { useAsTitle: 'email' },
   fields: [
     {
-      name: 'role',
-      type: 'select',
-      required: true,
-      defaultValue: 'editor',
-      options: [
-        { label: 'Platform owner', value: 'owner' },
-        { label: 'Publisher', value: 'publisher' },
-        { label: 'Editor', value: 'editor' },
-        { label: 'Reviewer', value: 'reviewer' },
-        { label: 'Viewer', value: 'viewer' },
-      ],
-      access: {
-        update: ({ req }) => req.user?.role === 'owner',
-      },
+      name: 'role', type: 'select', required: true, defaultValue: 'editor',
+      options: ['owner', 'publisher', 'editor', 'reviewer', 'viewer'].map((value) => ({ label: value, value })),
+      access: { update: ({ req }) => req.user?.role === 'owner' },
     },
-    {
-      name: 'organization',
-      type: 'text',
-      required: true,
-      defaultValue: 'XSAMA',
-      access: {
-        update: ({ req }) => req.user?.role === 'owner',
-      },
-    },
+    { name: 'organization', type: 'text', required: true, defaultValue: 'XSAMA', access: { update: ({ req }) => req.user?.role === 'owner' } },
   ],
 }

@@ -11,9 +11,7 @@ const nextConfig: NextConfig = {
   images: { localPatterns: [{ pathname: '/api/media/file/**' }] },
   webpack: (webpackConfig) => {
     webpackConfig.resolve.extensionAlias = {
-      '.cjs': ['.cts', '.cjs'],
-      '.js': ['.ts', '.tsx', '.js', '.jsx'],
-      '.mjs': ['.mts', '.mjs'],
+      '.cjs': ['.cts', '.cjs'], '.js': ['.ts', '.tsx', '.js', '.jsx'], '.mjs': ['.mts', '.mjs'],
     }
     return webpackConfig
   },
