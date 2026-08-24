@@ -30,7 +30,7 @@ export const ContentItems: CollectionConfig = {
         { name: 'copy', type: 'textarea', localized: true },
         { name: 'scheduledFor', type: 'date' },
         { name: 'externalDeliveryID', type: 'text', admin: { readOnly: true } },
-        { name: 'deliveryStatus', type: 'select', options: ['pending', 'sent', 'failed'], admin: { readOnly: true } },
+        { name: 'deliveryStatus', dbName: 'dv_status', type: 'select', options: ['pending', 'sent', 'failed'], admin: { readOnly: true } },
       ],
     },
   ],
