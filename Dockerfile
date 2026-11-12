@@ -36,7 +36,7 @@ WORKDIR /app
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
 
-RUN apk add --no-cache wget && corepack enable && corepack prepare pnpm@10.28.2 --activate && addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
+RUN apk add --no-cache wget && addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
@@ -53,5 +53,5 @@ ENV PORT 3000
 ENV HOSTNAME 0.0.0.0
 
 # Apply reviewed migrations once, then serve. A failed migration prevents a bad release.
-CMD ["sh", "-c", "pnpm payload migrate && pnpm start"]
+CMD ["sh", "-c", "/app/node_modules/.bin/payload migrate && /app/node_modules/.bin/next start"]
 
