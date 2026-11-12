@@ -42,7 +42,6 @@ jobs:
           images: ${{ env.IMAGE_NAME }}
           tags: |
             type=sha,format=long,prefix=sha-
-            type=raw,value=master
           labels: |
             org.opencontainers.image.title=xsama content
             org.opencontainers.image.description=Multi-tenant Payload CMS for XSAMA projects
