@@ -30,6 +30,13 @@ export const SiteSettings: CollectionConfig = {
         { label: 'None', value: 'none' },
       ],
     },
+    {
+      name: 'buildHookUrl',
+      type: 'text',
+      admin: {
+        description: 'Optional Netlify build hook. Publishing or removing a post triggers one build per tenant with a 60-second debounce.',
+      },
+    },
     { name: 'navigation', type: 'array', fields: [{ name: 'label', type: 'text', localized: true }, { name: 'href', type: 'text' }] },
   ],
 }
