@@ -1,6 +1,5 @@
 import type { CollectionConfig } from 'payload'
 import { editorialRead, enforceTenantRole, tenantWriteAccess } from '../access'
-import { requireTranslatedLocale } from '../locale-guard'
 import { seoFields, validateLocalizedCompleteness } from './content-contract'
 
 function editorial(slug: string, extra: CollectionConfig['fields']): CollectionConfig {
@@ -9,7 +8,7 @@ function editorial(slug: string, extra: CollectionConfig['fields']): CollectionC
     slug,
     admin: { useAsTitle: 'title', defaultColumns: ['title', 'tenant', 'section', '_status', 'updatedAt'] },
     versions: { drafts: true, maxPerDoc: 50 },
-    access: { read: requireTranslatedLocale(editorialRead(true)), create: write.create, update: write.update, delete: write.delete },
+    access: { read: editorialRead(true), create: write.create, update: write.update, delete: write.delete },
     hooks: { beforeChange: [enforceTenantRole(), validateLocalizedCompleteness] },
     fields: [
       { name: 'title', type: 'text', required: true, localized: true },
