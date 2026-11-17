@@ -42,17 +42,19 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
     `)
 
     await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS ${sql.raw(`"${collection}_locales_seo_keywords"`)} (
+      CREATE TABLE IF NOT EXISTS ${sql.raw(`"${collection}_seo_keywords"`)} (
         "_order" integer NOT NULL,
         "_parent_id" integer NOT NULL,
+        "_locale" "_locales" NOT NULL,
         "id" varchar PRIMARY KEY NOT NULL,
-        "term" varchar NOT NULL,
-        "locale" "_locales" NOT NULL
+        "term" varchar
       );
-      CREATE UNIQUE INDEX IF NOT EXISTS ${sql.raw(`"${collection}_locales_seo_keywords_order_idx"`)}
-        ON ${sql.raw(`"${collection}_locales_seo_keywords"`)} USING btree ("_order");
-      CREATE INDEX IF NOT EXISTS ${sql.raw(`"${collection}_locales_seo_keywords_parent_id_idx"`)}
-        ON ${sql.raw(`"${collection}_locales_seo_keywords"`)} USING btree ("_parent_id");
+      CREATE UNIQUE INDEX IF NOT EXISTS ${sql.raw(`"${collection}_seo_keywords_order_idx"`)}
+        ON ${sql.raw(`"${collection}_seo_keywords"`)} USING btree ("_order");
+      CREATE INDEX IF NOT EXISTS ${sql.raw(`"${collection}_seo_keywords_parent_id_idx"`)}
+        ON ${sql.raw(`"${collection}_seo_keywords"`)} USING btree ("_parent_id");
+      CREATE INDEX IF NOT EXISTS ${sql.raw(`"${collection}_seo_keywords_locale_idx"`)}
+        ON ${sql.raw(`"${collection}_seo_keywords"`)} USING btree ("_locale");
     `)
 
     await db.execute(sql`
@@ -65,19 +67,10 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
         "publisher" varchar,
         "accessed_at" timestamp(3) with time zone
       );
-      CREATE TABLE IF NOT EXISTS ${sql.raw(`"${collection}_citations_locales"`)} (
-        "title" varchar,
-        "publisher" varchar,
-        "id" serial PRIMARY KEY NOT NULL,
-        "_locale" "_locales" NOT NULL,
-        "_parent_id" varchar NOT NULL
-      );
       CREATE UNIQUE INDEX IF NOT EXISTS ${sql.raw(`"${collection}_citations_order_idx"`)}
         ON ${sql.raw(`"${collection}_citations"`)} USING btree ("_order");
       CREATE INDEX IF NOT EXISTS ${sql.raw(`"${collection}_citations_parent_id_idx"`)}
         ON ${sql.raw(`"${collection}_citations"`)} USING btree ("_parent_id");
-      CREATE UNIQUE INDEX IF NOT EXISTS ${sql.raw(`"${collection}_citations_locales_locale_parent_id_unique"`)}
-        ON ${sql.raw(`"${collection}_citations_locales"`)} USING btree ("_locale", "_parent_id");
     `)
 
     // tags exist on posts already; add them only to editorial collections
@@ -87,20 +80,13 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
           "_order" integer NOT NULL,
           "_parent_id" integer NOT NULL,
           "id" varchar PRIMARY KEY NOT NULL,
-          "name" varchar NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS ${sql.raw(`"${collection}_tags_locales"`)} (
-          "name" varchar,
-          "id" serial PRIMARY KEY NOT NULL,
           "_locale" "_locales" NOT NULL,
-          "_parent_id" varchar NOT NULL
+          "name" varchar
         );
         CREATE UNIQUE INDEX IF NOT EXISTS ${sql.raw(`"${collection}_tags_order_idx"`)}
           ON ${sql.raw(`"${collection}_tags"`)} USING btree ("_order");
         CREATE INDEX IF NOT EXISTS ${sql.raw(`"${collection}_tags_parent_id_idx"`)}
           ON ${sql.raw(`"${collection}_tags"`)} USING btree ("_parent_id");
-        CREATE UNIQUE INDEX IF NOT EXISTS ${sql.raw(`"${collection}_tags_locales_locale_parent_id_unique"`)}
-          ON ${sql.raw(`"${collection}_tags_locales"`)} USING btree ("_locale", "_parent_id");
       `)
     }
 
@@ -159,14 +145,12 @@ export async function down({ db }: MigrateDownArgs): Promise<void> {
     }
     if (collection !== 'posts') {
       await db.execute(sql`
-        DROP TABLE IF EXISTS ${sql.raw(`"${collection}_tags_locales"`)};
         DROP TABLE IF EXISTS ${sql.raw(`"${collection}_tags"`)};
       `)
     }
     await db.execute(sql`
-      DROP TABLE IF EXISTS ${sql.raw(`"${collection}_citations_locales"`)};
       DROP TABLE IF EXISTS ${sql.raw(`"${collection}_citations"`)};
-      DROP TABLE IF EXISTS ${sql.raw(`"${collection}_locales_seo_keywords"`)};
+      DROP TABLE IF EXISTS ${sql.raw(`"${collection}_seo_keywords"`)};
       ALTER TABLE ${sql.raw(`"${collection}_locales"`)} DROP COLUMN IF EXISTS "seo_title";
       ALTER TABLE ${sql.raw(`"${collection}_locales"`)} DROP COLUMN IF EXISTS "seo_description";
       ALTER TABLE ${sql.raw(`"${collection}_locales"`)} DROP COLUMN IF EXISTS "seo_breadcrumb_label";
