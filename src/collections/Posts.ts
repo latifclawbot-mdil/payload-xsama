@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { editorialRead, enforceTenantRole, isGlobalOwner, tenantIdOf, tenantWriteAccess } from '../access'
+import { requireTranslatedLocale } from '../locale-guard'
 import { richResultFields, seoFields, validateLocalizedCompleteness } from './content-contract'
 
 const write = tenantWriteAccess('posts')
@@ -57,7 +58,7 @@ export const Posts: CollectionConfig = {
   admin: { useAsTitle: 'title', defaultColumns: ['title', 'tenant', 'section', 'publishedAt', '_status', 'updatedAt'] },
   versions: { drafts: true, maxPerDoc: 100 },
   access: {
-    read: editorialRead(true),
+    read: requireTranslatedLocale(editorialRead(true)),
     create: write.create,
     update: write.update,
     delete: write.delete,
