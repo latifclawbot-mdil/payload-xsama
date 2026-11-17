@@ -27,8 +27,9 @@ const dirname = path.dirname(filename)
 const locales = [
   ['English', 'en'], ['العربية', 'ar'], ['Deutsch', 'de'], ['Español', 'es'],
   ['Filipino', 'fil'], ['Français', 'fr'], ['हिन्दी', 'hi'], ['Italiano', 'it'],
-  ['日本語', 'ja'], ['한국어', 'ko'], ['فارسی', 'fa'], ['Português', 'pt'],
-  ['Русский', 'ru'], ['Türkçe', 'tr'], ['اردو', 'ur'], ['中文', 'zh'],
+  ['Bahasa Indonesia', 'id'], ['日本語', 'ja'], ['한국어', 'ko'], ['فارسی', 'fa'],
+  ['Português', 'pt'], ['Русский', 'ru'], ['Türkçe', 'tr'], ['اردو', 'ur'],
+  ['中文', 'zh'], ['ಕನ್ನಡ', 'kn'],
 ] as const
 
 const TENANTS = [

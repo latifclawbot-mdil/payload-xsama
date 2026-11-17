@@ -104,7 +104,7 @@ for (const [slug, byLocale] of [...journal.entries()].sort()) {
     draft: true,
     overrideAccess: true,
   })
-  let document = existing.docs[0]
+  let document: any = existing.docs[0]
   if (document) {
     updated += 1
   } else {
@@ -117,15 +117,17 @@ for (const [slug, byLocale] of [...journal.entries()].sort()) {
         content: convertHTMLToLexical({ editorConfig, html: english.content, JSDOM }),
         coverImage: mediaId,
         tags: english.tags?.map((name) => ({ name })) ?? [],
-        publishedAt: new Date(`${english.date}T00:00:00.000Z`).toISOString(),
         tenant: tenant.id,
+        section: 'insights',
+        publishedAt: new Date(`${english.date}T00:00:00.000Z`).toISOString(),
+        seo: {title: english.title.slice(0, 70), description: english.excerpt.slice(0, 160)},
         _status: status,
       },
       locale: 'en',
       draft: status !== 'published',
       overrideAccess: true,
       req,
-    })
+    } as any)
     created += 1
   }
 
@@ -143,6 +145,8 @@ for (const [slug, byLocale] of [...journal.entries()].sort()) {
         excerpt: post.excerpt,
         content: convertHTMLToLexical({ editorConfig, html: post.content, JSDOM }),
         tags: post.tags?.map((name) => ({ name })) ?? [],
+        section: 'insights',
+        seo: { title: post.title.slice(0, 70), description: post.excerpt.slice(0, 160) },
         _status: status,
       },
     })

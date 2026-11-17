@@ -1,20 +1,28 @@
 import type { CollectionConfig } from 'payload'
 import { editorialRead, enforceTenantRole, tenantWriteAccess } from '../access'
+import { seoFields, validateLocalizedCompleteness } from './content-contract'
 
 function editorial(slug: string, extra: CollectionConfig['fields']): CollectionConfig {
   const write = tenantWriteAccess(slug as any)
   return {
     slug,
-    admin: { useAsTitle: 'title', defaultColumns: ['title', 'tenant', '_status', 'updatedAt'] },
+    admin: { useAsTitle: 'title', defaultColumns: ['title', 'tenant', 'section', '_status', 'updatedAt'] },
     versions: { drafts: true, maxPerDoc: 50 },
     access: { read: editorialRead(true), create: write.create, update: write.update, delete: write.delete },
-    hooks: { beforeChange: [enforceTenantRole()] },
+    hooks: { beforeChange: [enforceTenantRole(), validateLocalizedCompleteness] },
     fields: [
       { name: 'title', type: 'text', required: true, localized: true },
       { name: 'slug', type: 'text', required: true, index: true },
       { name: 'excerpt', type: 'textarea', required: true, localized: true, maxLength: 400 },
       { name: 'content', type: 'richText', required: true, localized: true },
       { name: 'coverImage', type: 'upload', relationTo: 'media' },
+      {
+        name: 'tags',
+        type: 'array',
+        localized: true,
+        fields: [{ name: 'name', type: 'text', required: true }],
+      },
+      ...seoFields,
       ...extra,
     ],
   }

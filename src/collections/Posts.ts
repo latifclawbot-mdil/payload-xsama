@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { editorialRead, enforceTenantRole, isGlobalOwner, tenantIdOf, tenantWriteAccess } from '../access'
+import { richResultFields, seoFields, validateLocalizedCompleteness } from './content-contract'
 
 const write = tenantWriteAccess('posts')
 const recentBuilds = new Map<string, number>()
@@ -53,7 +54,7 @@ async function triggerPublishedBuild({ doc, previousDoc, req }: any) {
 
 export const Posts: CollectionConfig = {
   slug: 'posts',
-  admin: { useAsTitle: 'title', defaultColumns: ['title', 'tenant', 'publishedAt', '_status', 'updatedAt'] },
+  admin: { useAsTitle: 'title', defaultColumns: ['title', 'tenant', 'section', 'publishedAt', '_status', 'updatedAt'] },
   versions: { drafts: true, maxPerDoc: 100 },
   access: {
     read: editorialRead(true),
@@ -62,7 +63,7 @@ export const Posts: CollectionConfig = {
     delete: write.delete,
   },
   hooks: {
-    beforeChange: [enforceTenantRole()],
+    beforeChange: [enforceTenantRole(), validateLocalizedCompleteness],
     afterChange: [triggerPublishedBuild],
     afterDelete: [triggerPublishedBuild],
   },
@@ -80,10 +81,12 @@ export const Posts: CollectionConfig = {
     },
     { name: 'publishedAt', type: 'date', required: true, index: true },
     {
-      name: 'authorName',
-      type: 'text',
-      localized: true,
-      admin: { description: 'Named author whose work is being published; leave blank for an institutional byline.' },
+      name: 'contentType',
+      type: 'select',
+      defaultValue: 'article',
+      options: ['article', 'guide', 'comparison', 'glossary'].map((value) => ({ label: value, value })),
     },
+    ...seoFields,
+    ...richResultFields,
   ],
 }
