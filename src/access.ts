@@ -1,4 +1,4 @@
-import type { Access, CollectionSlug, PayloadRequest, Where } from 'payload'
+import type { Access, CollectionSlug, FieldAccess, PayloadRequest, Where } from 'payload'
 import { APIError } from 'payload'
 
 export const TENANT_ROLES = ['owner', 'publisher', 'editor', 'reviewer', 'viewer', 'builder'] as const
@@ -92,6 +92,15 @@ export function tenantMemberRead(): Access {
     if (isGlobalOwner(req.user as TenantUser)) return true
     const ids = tenantIds(req.user as TenantUser)
     return ids.length ? { tenant: { in: ids } } : false
+  }
+}
+
+/** Tenant members with write authority only — use for operational fields such as build hooks. */
+export function tenantOperatorFieldRead(): FieldAccess {
+  return ({ req }) => {
+    if (isGlobalOwner(req.user as TenantUser)) return true
+    return tenantRows(req.user as TenantUser)
+      .some((row) => !!row.role && WRITE_ROLES.includes(row.role))
   }
 }
 

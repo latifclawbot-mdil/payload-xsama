@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { enforceTenantRole, tenantMemberRead, tenantWriteAccess } from '../access'
+import { enforceTenantRole, tenantMemberRead, tenantOperatorFieldRead, tenantWriteAccess } from '../access'
 
 const write = tenantWriteAccess('site-settings')
 
@@ -33,8 +33,11 @@ export const SiteSettings: CollectionConfig = {
     {
       name: 'buildHookUrl',
       type: 'text',
+      access: {
+        read: tenantOperatorFieldRead(),
+      },
       admin: {
-        description: 'Optional Netlify build hook. Publishing or removing a post triggers one build per tenant with a 60-second debounce.',
+        description: 'Optional Netlify build hook. Publishing or removing a post triggers one build per tenant with a 60-second debounce. Visible to owners, publishers, and editors only.',
       },
     },
     { name: 'navigation', type: 'array', fields: [{ name: 'label', type: 'text', localized: true }, { name: 'href', type: 'text' }] },
