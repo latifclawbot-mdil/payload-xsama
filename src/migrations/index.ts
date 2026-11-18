@@ -3,6 +3,7 @@ import * as migration_20261112_121525_add_build_hook_url from './20261112_121525
 import * as migration_20261112_103000_content_contract from './20261112_103000_content_contract';
 import * as migration_20261117_130000_add_id_kn_locales from './20261117_130000_add_id_kn_locales';
 import * as migration_20261117_140000_publishing_config from './20261117_140000_publishing_config';
+import * as migration_20261118_080000_version_contract_fields from './20261118_080000_version_contract_fields';
 
 export const migrations = [
   {
@@ -29,5 +30,10 @@ export const migrations = [
     up: migration_20261117_140000_publishing_config.up,
     down: migration_20261117_140000_publishing_config.down,
     name: '20261117_140000_publishing_config'
+  },
+  {
+    up: migration_20261118_080000_version_contract_fields.up,
+    down: migration_20261118_080000_version_contract_fields.down,
+    name: '20261118_080000_version_contract_fields'
   },
 ];
