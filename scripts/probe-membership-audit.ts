@@ -12,7 +12,7 @@ import { getPayload } from 'payload'
 import config from '../src/payload.config'
 
 const OWNER_EMAIL = (process.env.PAYLOAD_OWNER_EMAILS || '').split(',')[0]?.trim() || 'mdil@xsama.org'
-const PROBE_EMAIL = 'audit-probe@xsama.invalid'
+const PROBE_EMAIL = 'audit-probe@example.com'
 const TENANT_SLUG = 'layyun'
 
 const payload = await getPayload({ config })

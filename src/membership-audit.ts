@@ -175,7 +175,9 @@ export const auditAccountDelete: CollectionAfterDeleteHook = async ({ doc, req }
       {
         action: 'account_deleted',
         tenant: null,
-        subject: doc.id,
+        // The account no longer exists, so a subject foreign key would violate
+        // its constraint. The email is the durable identifying fact.
+        subject: null,
         subjectEmail: doc.email,
         summary: `Account deleted: ${doc.email}`,
       },
