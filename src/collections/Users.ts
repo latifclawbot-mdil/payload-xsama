@@ -1,5 +1,14 @@
 import type { CollectionConfig } from 'payload'
 import { isGlobalOwner } from '../access'
+import {
+  globalRoleFieldAccess,
+  hasAnyTenantRole,
+  userDirectoryCreate,
+  userDirectoryDelete,
+  userDirectoryRead,
+  userDirectoryUpdate,
+  validateTenantRows,
+} from '../membership'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -8,18 +17,22 @@ export const Users: CollectionConfig = {
     maxLoginAttempts: 8,
     lockTime: 10 * 60 * 1000,
   },
-  admin: { useAsTitle: 'email', defaultColumns: ['email', 'name', 'updatedAt'] },
+  admin: {
+    useAsTitle: 'email',
+    defaultColumns: ['email', 'name', 'globalRole', 'updatedAt'],
+    description: 'Project members. A project owner can add or remove members for their own project only.',
+  },
   access: {
-    admin: ({ req }) => isGlobalOwner(req.user as any),
-    read: ({ req }) =>
-      isGlobalOwner(req.user as any) ? true : req.user ? { id: { equals: req.user.id } } : false,
-    create: async ({ req }) => {
-      const existing = await req.payload.count({ collection: 'users', overrideAccess: true })
-      return existing.totalDocs === 0 || isGlobalOwner(req.user as any)
-    },
-    update: ({ req, id }) =>
-      isGlobalOwner(req.user as any) ? true : !!req.user && String(req.user.id) === String(id),
-    delete: ({ req }) => isGlobalOwner(req.user as any),
+    // Any project owner, or a global owner, may reach the member list.
+    admin: ({ req }) =>
+      isGlobalOwner(req.user as any) || hasAnyTenantRole(req.user as any, ['owner']),
+    read: userDirectoryRead(),
+    create: userDirectoryCreate,
+    update: userDirectoryUpdate,
+    delete: userDirectoryDelete,
+  },
+  hooks: {
+    beforeChange: [validateTenantRows],
   },
   fields: [
     { name: 'name', type: 'text' },
@@ -29,8 +42,8 @@ export const Users: CollectionConfig = {
       defaultValue: 'editor',
       options: ['owner', 'editor'].map((value) => ({ label: value, value })),
       access: {
-        create: ({ req }) => isGlobalOwner(req.user as any),
-        update: ({ req }) => isGlobalOwner(req.user as any),
+        create: globalRoleFieldAccess,
+        update: globalRoleFieldAccess,
       },
       admin: {
         description:
