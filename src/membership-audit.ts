@@ -111,7 +111,9 @@ async function writeEntries(req: PayloadRequest, entries: Entry[], subject: any,
         data: {
           ...entry,
           tenant: entry.tenant ?? null,
-          subject: entry.subject ?? subject?.id ?? null,
+          // An explicit null means "no referencable subject" (a deleted account):
+          // only fall back to the document when the entry did not specify one.
+          subject: entry.subject !== undefined ? entry.subject : (subject?.id ?? null),
           subjectEmail: entry.subjectEmail ?? subject?.email ?? null,
           actor: actorDoc?.id ?? null,
           actorEmail: actorDoc?.email ?? null,
@@ -182,7 +184,9 @@ export const auditAccountDelete: CollectionAfterDeleteHook = async ({ doc, req }
         summary: `Account deleted: ${doc.email}`,
       },
     ],
-    doc,
+    // Do not pass the deleted document: an account-deleted entry must not
+    // reference a user row that no longer exists.
+    null,
     req.user as Actor,
   )
   return doc
