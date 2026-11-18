@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import type { TenantRole } from '@/access'
 import {
   assignableRoles,
   canManageMembers,
@@ -13,19 +14,19 @@ const reqFor = (user: any) => ({ user }) as any
 const ownerA = {
   id: 10,
   email: 'owner-a@example.com',
-  tenants: [{ tenant: 't-a', role: 'owner' }],
+  tenants: [{ tenant: 't-a', role: 'owner' as TenantRole }],
 }
 const editorA = {
   id: 11,
   email: 'editor-a@example.com',
-  tenants: [{ tenant: 't-a', role: 'editor' }],
+  tenants: [{ tenant: 't-a', role: 'editor' as TenantRole }],
 }
 const ownerAB = {
   id: 12,
   email: 'owner-ab@example.com',
   tenants: [
-    { tenant: 't-a', role: 'owner' },
-    { tenant: 't-b', role: 'owner' },
+    { tenant: 't-a', role: 'owner' as TenantRole },
+    { tenant: 't-b', role: 'owner' as TenantRole },
   ],
 }
 const globalOwner = { id: 1, email: 'root@example.com', tenants: [] }
