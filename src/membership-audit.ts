@@ -131,6 +131,9 @@ async function writeEntries(req: PayloadRequest, entries: Entry[], subject: any,
 }
 
 export const auditMembershipChange: CollectionAfterChangeHook = async ({ doc, previousDoc, operation, req }) => {
+  // Account creation records its own initial memberships; running the diff here
+  // too would duplicate every row.
+  if (operation === 'create') return doc
   const previous = rowsOf(previousDoc)
   const current = rowsOf(doc)
   const entries = membershipDiff(previous, current)
