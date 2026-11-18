@@ -141,6 +141,11 @@ export default buildConfig({
   ],
   onInit: async (payload) => {
     // Idempotent tenant bootstrap: create configured projects if absent, never delete or overwrite.
+    // Bootstrap writes run as the configured global owner so tenant-role guards
+    // (which apply to every write, including system boot) remain enforced.
+    const bootstrapReq = {
+      user: { email: (process.env.PAYLOAD_OWNER_EMAILS || '').split(',')[0]?.trim() },
+    } as any
     for (const [name, slug, domain, sections] of TENANTS) {
       const found = await payload.find({
         collection: 'tenants',
@@ -177,6 +182,7 @@ export default buildConfig({
             buildTarget: 'netlify',
           },
           overrideAccess: true,
+          req: bootstrapReq,
         })
       }
     }
