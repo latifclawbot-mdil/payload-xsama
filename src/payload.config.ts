@@ -8,6 +8,8 @@ import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
 import { isGlobalOwner, TENANT_ROLES } from './access'
+import type { TenantRole } from './access'
+import { assignableRoles, tenantRowsFieldAccess } from './membership'
 import { Media } from './collections/Media'
 import { Posts } from './collections/Posts'
 import { SiteSettings } from './collections/SiteSettings'
@@ -78,6 +80,16 @@ export default buildConfig({
       tenantsArrayField: {
         includeDefaultField: true,
         arrayFieldName: 'tenants',
+        // Only owners (and global owners) may see or edit the membership array.
+        arrayFieldAccess: {
+          read: tenantRowsFieldAccess,
+          create: tenantRowsFieldAccess,
+          update: tenantRowsFieldAccess,
+        },
+        // Only people who can manage members may see or change project references.
+        tenantFieldAccess: {
+          read: tenantRowsFieldAccess,
+        },
         rowFields: [
           {
             name: 'role',
@@ -85,6 +97,15 @@ export default buildConfig({
             required: true,
             defaultValue: 'viewer',
             options: TENANT_ROLES.map((value) => ({ label: value, value })),
+            validate: (value: string[] | string | null | undefined, { req }: any) => {
+              const role = Array.isArray(value) ? value[0] : value
+              if (!role) return 'Choose a role for this project.'
+              if (isGlobalOwner(req?.user)) return true
+              const assignable = assignableRoles(req?.user)
+              return assignable.includes(role as TenantRole)
+                ? true
+                : `You cannot assign the "${role}" role.`
+            },
           },
         ],
       },
