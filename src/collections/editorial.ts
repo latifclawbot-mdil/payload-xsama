@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { editorialRead, enforceTenantRole, tenantWriteAccess } from '../access'
+import { requestRebuildOnDelete, requestRebuildOnPublish } from '../build-trigger'
 import { seoFields, validateLocalizedCompleteness } from './content-contract'
 
 function editorial(slug: string, extra: CollectionConfig['fields']): CollectionConfig {
@@ -9,7 +10,11 @@ function editorial(slug: string, extra: CollectionConfig['fields']): CollectionC
     admin: { useAsTitle: 'title', defaultColumns: ['title', 'tenant', 'section', '_status', 'updatedAt'] },
     versions: { drafts: true, maxPerDoc: 50 },
     access: { read: editorialRead(true), create: write.create, update: write.update, delete: write.delete },
-    hooks: { beforeChange: [enforceTenantRole(), validateLocalizedCompleteness] },
+    hooks: {
+      beforeChange: [enforceTenantRole(), validateLocalizedCompleteness],
+      afterChange: [requestRebuildOnPublish],
+      afterDelete: [requestRebuildOnDelete],
+    },
     fields: [
       { name: 'title', type: 'text', required: true, localized: true },
       { name: 'slug', type: 'text', required: true, index: true },

@@ -35,14 +35,14 @@ const locales = [
 ] as const
 
 const TENANTS = [
-  ['Advista', 'advista', 'advistaltd.com'],
-  ['EXIM Community', 'exim', 'exim.community'],
-  ['Vlobel', 'vlobel', 'vlobel.com'],
-  ['Afnosh Packaging', 'afnosh', 'afnosh.com'],
-  ['Qasmos', 'qasmos', 'qasmos.com'],
-  ['Zamindarr', 'zamindarr', 'zamindarr.com'],
-  ['Nagerik', 'nagerik', 'nagerik.com'],
-  ['Layyun', 'layyun', 'layyun.net'],
+  ['Advista', 'advista', 'advistaltd.com', ['insights']],
+  ['EXIM Community', 'exim', 'exim.community', ['insights', 'regulations']],
+  ['Vlobel', 'vlobel', 'vlobel.com', ['insights', 'work', 'regulations']],
+  ['Afnosh Packaging', 'afnosh', 'afnosh.com', ['guides']],
+  ['Qasmos', 'qasmos', 'qasmos.com', ['work']],
+  ['Zamindarr', 'zamindarr', 'zamindarr.com', ['guides', 'regulations']],
+  ['Nagerik', 'nagerik', 'nagerik.com', ['guides']],
+  ['Layyun', 'layyun', 'layyun.net', ['journal']],
 ] as const
 
 export default buildConfig({
@@ -141,17 +141,41 @@ export default buildConfig({
   ],
   onInit: async (payload) => {
     // Idempotent tenant bootstrap: create configured projects if absent, never delete or overwrite.
-    for (const [name, slug, domain] of TENANTS) {
+    for (const [name, slug, domain, sections] of TENANTS) {
       const found = await payload.find({
         collection: 'tenants',
         where: { slug: { equals: slug } },
         limit: 1,
         overrideAccess: true,
       })
-      if (!found.totalDocs) {
-        await payload.create({
+      let tenant = found.docs[0]
+      if (!tenant) {
+        tenant = await payload.create({
           collection: 'tenants',
           data: { name, slug, domain, defaultLocale: 'en' },
+          overrideAccess: true,
+        })
+      }
+
+      // One publishing configuration per project. Never overwrite an existing record.
+      const settings = await payload.find({
+        collection: 'site-settings',
+        where: { tenant: { equals: tenant.id } },
+        limit: 1,
+        overrideAccess: true,
+      })
+      if (!settings.totalDocs) {
+        await payload.create({
+          collection: 'site-settings',
+          data: {
+            tenant: tenant.id,
+            siteName: name,
+            domain,
+            defaultLocale: 'en',
+            blogRoot: 'blog',
+            enabledSections: [...sections],
+            buildTarget: 'netlify',
+          },
           overrideAccess: true,
         })
       }
