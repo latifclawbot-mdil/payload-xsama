@@ -9,6 +9,7 @@ import {
   userDirectoryUpdate,
   validateTenantRows,
 } from '../membership'
+import { auditAccountCreate, auditAccountDelete, auditMembershipChange } from '../membership-audit'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -33,6 +34,8 @@ export const Users: CollectionConfig = {
   },
   hooks: {
     beforeChange: [validateTenantRows],
+    afterChange: [auditAccountCreate, auditMembershipChange],
+    afterDelete: [auditAccountDelete],
   },
   fields: [
     { name: 'name', type: 'text' },
