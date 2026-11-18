@@ -28,6 +28,7 @@ async function recordOutcome(
   settingsId: string | number,
   status: 'delivered' | 'failed' | 'unconfigured',
   error?: string,
+  req?: any,
 ) {
   try {
     await payload.update({
@@ -39,6 +40,8 @@ async function recordOutcome(
         ...(error ? { lastBuildError: error.slice(0, 500) } : {}),
       },
       overrideAccess: true,
+      // Reuse the originating request so tenant guards evaluate the real actor.
+      ...(req ? { req } : {}),
     })
   } catch (writeError) {
     payload.logger.warn(
@@ -85,7 +88,7 @@ export async function requestTenantRebuild({
   const hook = record.buildHookUrl?.trim()
   if (!hook) {
     // Nothing to call, but record the state so the gap is visible in the admin.
-    await recordOutcome(req.payload, record.id, 'unconfigured')
+    await recordOutcome(req.payload, record.id, 'unconfigured', undefined, req)
     return
   }
 
@@ -93,7 +96,7 @@ export async function requestTenantRebuild({
   try {
     url = new URL(hook)
   } catch {
-    await recordOutcome(req.payload, record.id, 'failed', 'Invalid build hook URL')
+    await recordOutcome(req.payload, record.id, 'failed', 'Invalid build hook URL', req)
     return
   }
   if (url.protocol !== 'https:' || !allowedHosts().includes(url.hostname.toLowerCase())) {
@@ -102,6 +105,7 @@ export async function requestTenantRebuild({
       record.id,
       'failed',
       `Refused host ${url.hostname}: not in BUILD_HOOK_ALLOWED_HOSTS`,
+      req,
     )
     return
   }
@@ -110,11 +114,11 @@ export async function requestTenantRebuild({
   try {
     const response = await fetch(url, { method: 'POST', signal: AbortSignal.timeout(10_000) })
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
-    await recordOutcome(req.payload, record.id, 'delivered')
+    await recordOutcome(req.payload, record.id, 'delivered', undefined, req)
     req.payload.logger.info(`Requested rebuild for tenant ${key}`)
   } catch (error) {
     recentBuilds.delete(key)
-    await recordOutcome(req.payload, record.id, 'failed', (error as Error).message)
+    await recordOutcome(req.payload, record.id, 'failed', (error as Error).message, req)
     req.payload.logger.error(`Rebuild request failed for tenant ${key}: ${(error as Error).message}`)
   }
 }
