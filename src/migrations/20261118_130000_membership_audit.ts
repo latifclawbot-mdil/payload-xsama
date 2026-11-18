@@ -48,6 +48,21 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
       ADD CONSTRAINT "membership_audit_actor_id_users_id_fk"
       FOREIGN KEY ("actor_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
 
+    -- Payload's shared relationship table needs a column per collection, or every
+    -- document update fails with "column membership_audit_id does not exist".
+    ALTER TABLE "payload_locked_documents_rels"
+      ADD COLUMN IF NOT EXISTS "membership_audit_id" integer;
+
+    DO $$ BEGIN
+      ALTER TABLE "payload_locked_documents_rels"
+        ADD CONSTRAINT "payload_locked_documents_rels_membership_audit_fk"
+        FOREIGN KEY ("membership_audit_id") REFERENCES "public"."membership_audit"("id")
+        ON DELETE cascade ON UPDATE no action;
+    EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+    CREATE INDEX IF NOT EXISTS "payload_locked_documents_rels_membership_audit_id_idx"
+      ON "payload_locked_documents_rels" ("membership_audit_id");
+
     CREATE INDEX IF NOT EXISTS "membership_audit_tenant_idx" ON "membership_audit" ("tenant_id");
     CREATE INDEX IF NOT EXISTS "membership_audit_action_idx" ON "membership_audit" ("action");
     CREATE INDEX IF NOT EXISTS "membership_audit_created_at_idx" ON "membership_audit" ("created_at");
@@ -56,6 +71,7 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
 
 export async function down({ db }: MigrateDownArgs): Promise<void> {
   await db.execute(sql`
+    ALTER TABLE "payload_locked_documents_rels" DROP COLUMN IF EXISTS "membership_audit_id";
     DROP TABLE IF EXISTS "membership_audit" CASCADE;
     DROP TYPE IF EXISTS "public"."enum_membership_audit_action";
     DROP TYPE IF EXISTS "public"."enum_membership_audit_source";
