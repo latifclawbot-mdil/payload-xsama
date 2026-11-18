@@ -13,6 +13,7 @@ import { assignableRoles, tenantRowsFieldAccess } from './membership'
 import { Media } from './collections/Media'
 import { Posts } from './collections/Posts'
 import { SiteSettings } from './collections/SiteSettings'
+import { MembershipAudit } from './collections/MembershipAudit'
 import { Tenants } from './collections/Tenants'
 import { Users } from './collections/Users'
 import {
@@ -53,6 +54,7 @@ export default buildConfig({
     Media,
     Posts,
     SiteSettings,
+    MembershipAudit,
     CaseStudies,
     PackagingGuides,
     FitGuides,
