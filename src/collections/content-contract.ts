@@ -109,3 +109,23 @@ export async function validateLocalizedCompleteness({ req, data, originalDoc }: 
   }
   return data
 }
+
+/**
+ * URL identity is fixed once a document is published. `slug` + `section` form the
+ * canonical URL that every tenant site, sitemap and search index already links
+ * to; editing them on a live document would silently 404 those links. Pin them to
+ * the published values so content edits still apply but the URL cannot drift.
+ * To deliberately move a URL, unpublish first (the guard then releases).
+ */
+export function preservePublishedUrl({ data, originalDoc, operation, req }: any) {
+  if (operation !== 'update' || !originalDoc || originalDoc._status !== 'published') return data
+  for (const field of ['slug', 'section'] as const) {
+    if (data && field in data && data[field] !== originalDoc[field]) {
+      req?.payload?.logger?.warn?.(
+        `Pinned ${field} on published ${originalDoc.id}: URL identity is fixed after publish. Unpublish to change it.`,
+      )
+      data[field] = originalDoc[field]
+    }
+  }
+  return data
+}

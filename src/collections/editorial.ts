@@ -1,7 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { editorialRead, enforceTenantRole, tenantWriteAccess } from '../access'
 import { requestRebuildOnDelete, requestRebuildOnPublish } from '../build-trigger'
-import { seoFields, validateLocalizedCompleteness } from './content-contract'
+import { seoFields, validateLocalizedCompleteness, preservePublishedUrl } from './content-contract'
 
 function editorial(slug: string, extra: CollectionConfig['fields']): CollectionConfig {
   const write = tenantWriteAccess(slug as any)
@@ -11,7 +11,7 @@ function editorial(slug: string, extra: CollectionConfig['fields']): CollectionC
     versions: { drafts: true, maxPerDoc: 50 },
     access: { read: editorialRead(true), create: write.create, update: write.update, delete: write.delete },
     hooks: {
-      beforeChange: [enforceTenantRole(), validateLocalizedCompleteness],
+      beforeChange: [enforceTenantRole(), preservePublishedUrl, validateLocalizedCompleteness],
       afterChange: [requestRebuildOnPublish],
       afterDelete: [requestRebuildOnDelete],
     },

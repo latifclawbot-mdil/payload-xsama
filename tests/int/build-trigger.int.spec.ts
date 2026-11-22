@@ -76,4 +76,24 @@ describe('tenant rebuild trigger', () => {
     expect(fetchSpy).not.toHaveBeenCalled()
     expect(payload.find).not.toHaveBeenCalled()
   })
+
+  it('fires a trailing rebuild for a late change inside the debounce window', async () => {
+    vi.useFakeTimers()
+    try {
+      const payload = fakePayload({ hook: 'https://api.netlify.com/build_hooks/abc' })
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('', { status: 200 }))
+      const req = reqFor(payload)
+      await requestTenantRebuild({ req, doc: { tenant: 1 } })
+      expect(fetchSpy).toHaveBeenCalledOnce()
+      // A late edit inside the 60s window is coalesced, not fired immediately.
+      await requestTenantRebuild({ req, doc: { tenant: 1, title: 'late edit' } })
+      expect(fetchSpy).toHaveBeenCalledOnce()
+      // At the window's end exactly one trailing rebuild fires.
+      await vi.advanceTimersByTimeAsync(60_000)
+      await vi.advanceTimersByTimeAsync(1)
+      expect(fetchSpy).toHaveBeenCalledTimes(2)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })

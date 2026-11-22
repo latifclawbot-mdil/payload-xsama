@@ -9,6 +9,8 @@ import { tenantIdOf } from './access'
  */
 
 const recentBuilds = new Map<string, number>()
+const pendingTimers = new Map<string, ReturnType<typeof setTimeout>>()
+const pendingChanges = new Map<string, { req: any; doc?: any; previousDoc?: any }>()
 const BUILD_DEBOUNCE_MS = 60_000
 
 type SiteSettingsDoc = {
@@ -70,7 +72,26 @@ export async function requestTenantRebuild({
 
   const key = String(tenantId)
   const now = Date.now()
-  if (!force && now - (recentBuilds.get(key) ?? 0) < BUILD_DEBOUNCE_MS) return
+  const elapsed = now - (recentBuilds.get(key) ?? 0)
+  if (!force && elapsed < BUILD_DEBOUNCE_MS) {
+    // Inside the debounce window: coalesce this change into ONE trailing rebuild
+    // at the window's end. Without this, a late edit (e.g. at +59s) was silently
+    // dropped and would not publish until the next unrelated change.
+    pendingChanges.set(key, { req, doc, previousDoc })
+    if (!pendingTimers.has(key)) {
+      const timer = setTimeout(() => {
+        pendingTimers.delete(key)
+        const change = pendingChanges.get(key)
+        pendingChanges.delete(key)
+        // Use a minimal req carrying the stable payload instance: the originating
+        // request's transaction may be closed by the time the trailing fire runs.
+        if (change) void requestTenantRebuild({ ...change, force: true, req: { payload: change.req.payload } })
+      }, BUILD_DEBOUNCE_MS - elapsed)
+      if (typeof timer.unref === 'function') timer.unref()
+      pendingTimers.set(key, timer)
+    }
+    return
+  }
 
   const settings = await req.payload.find({
     collection: 'site-settings',
@@ -136,7 +157,10 @@ export async function requestRebuildOnDelete({ doc, req }: any) {
   await requestTenantRebuild({ req, doc: undefined, previousDoc: doc })
 }
 
-/** Test seam: clear the debounce window. */
+/** Test seam: clear the debounce window and any pending trailing rebuilds. */
 export function resetRebuildDebounce() {
   recentBuilds.clear()
+  for (const timer of pendingTimers.values()) clearTimeout(timer)
+  pendingTimers.clear()
+  pendingChanges.clear()
 }
