@@ -5,6 +5,7 @@ import * as migration_20261117_130000_add_id_kn_locales from './20261117_130000_
 import * as migration_20261117_140000_publishing_config from './20261117_140000_publishing_config';
 import * as migration_20261118_080000_version_contract_fields from './20261118_080000_version_contract_fields';
 import * as migration_20261118_130000_membership_audit from './20261118_130000_membership_audit';
+import * as migration_20261122_120000_add_gu_ta_te_ml_locales from './20261122_120000_add_gu_ta_te_ml_locales';
 
 export const migrations = [
   {
@@ -41,5 +42,10 @@ export const migrations = [
     up: migration_20261118_130000_membership_audit.up,
     down: migration_20261118_130000_membership_audit.down,
     name: '20261118_130000_membership_audit'
+  },
+  {
+    up: migration_20261122_120000_add_gu_ta_te_ml_locales.up,
+    down: migration_20261122_120000_add_gu_ta_te_ml_locales.down,
+    name: '20261122_120000_add_gu_ta_te_ml_locales'
   },
 ];

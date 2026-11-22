@@ -33,6 +33,7 @@ const locales = [
   ['Bahasa Indonesia', 'id'], ['日本語', 'ja'], ['한국어', 'ko'], ['فارسی', 'fa'],
   ['Português', 'pt'], ['Русский', 'ru'], ['Türkçe', 'tr'], ['اردو', 'ur'],
   ['中文', 'zh'], ['ಕನ್ನಡ', 'kn'],
+  ['ગુજરાતી', 'gu'], ['தமிழ்', 'ta'], ['తెలుగు', 'te'], ['മലയാളം', 'ml'],
 ] as const
 
 const TENANTS = [
@@ -44,6 +45,7 @@ const TENANTS = [
   ['Zamindarr', 'zamindarr', 'zamindarr.com', ['guides', 'regulations']],
   ['Nagerik', 'nagerik', 'nagerik.com', ['guides']],
   ['Layyun', 'layyun', 'layyun.net', ['journal']],
+  ['Dhanda', 'dhanda', 'dhandai.com', ['guides']],
 ] as const
 
 export default buildConfig({
