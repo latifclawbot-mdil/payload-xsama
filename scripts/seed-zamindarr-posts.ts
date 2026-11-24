@@ -2,12 +2,13 @@
  * Migrate Zamindarr's four legacy hardcoded blog articles (old branch
  * src/data/blogArticles.ts) into the multi-tenant CMS, tenant `zamindarr`.
  *
+ * Content is copied VERBATIM from the legacy articles (split on blank lines into
+ * paragraphs) — no paraphrasing, no invented facts. Upserts by tenant + slug so a
+ * re-run repairs any earlier drifted copy. Published English-only (other locales
+ * stay empty and are omitted from builds until translated). No cover image.
+ *
  * Run inside the production container (DATABASE_URL / PAYLOAD_SECRET present):
  *   node_modules/.bin/tsx scripts/seed-zamindarr-posts.ts
- *
- * Idempotent by tenant + slug. Published English-only (other locales stay empty
- * and are omitted from builds until translated). No cover image is attached
- * (optional); the legacy /lovable-uploads art can be added later via Media.
  */
 import { getPayload } from 'payload'
 import config from '../src/payload.config'
@@ -30,20 +31,21 @@ type Legacy = {
   paragraphs: string[]
 }
 
+// Verbatim from old branch src/data/blogArticles.ts (content split on "\n\n").
 const ARTICLES: Legacy[] = [
   {
     slug: 'digital-revolution-or-documentation-nightmare',
     title: 'Digital Revolution or Documentation Nightmare?',
     section: 'guides',
     contentType: 'guide',
-    excerpt: "Karnataka's Bhoomi RTC went digital in November 2025, but only 80% of records are available online. The rest? Still paper.",
+    excerpt: "E-Khata's Mandatory Implementation Transforms Bangalore Property Transactions",
     publishedAt: '2024-01-15',
-    tags: ['documentation', 'bhoomi', 'kaveri', 'due diligence'],
+    tags: ['e-khata', 'documentation', 'market trends'],
     paragraphs: [
-      "The state's ambitious digitization drive has hit a wall. While urban properties transition smoothly to online systems, rural land records remain trapped in bureaucratic limbo.",
-      "Buyers now face a dual system: digital records for some properties, physical files for others. This creates confusion and delays in property transactions.",
-      "The Kaveri 2.0 portal promises seamless integration, but ground reality shows stark differences between districts. Bangalore Urban leads with 95% digitization, while rural districts lag at 60%.",
-      "Property buyers must now verify both digital and physical records, doubling their due diligence efforts. The promise of a paperless future remains just that—a promise.",
+      "The digitization of property records through E-Khata represents a watershed moment in Bangalore's real estate administration. Since its mandatory implementation on September 30, 2024, property owners and developers have been navigating a fundamentally transformed documentation landscape.",
+      'Effective July 1, 2025, BBMP has integrated E-Khata submission as a prerequisite for all online building plan approvals through the EoDB-OBPS platform. This integration streamlines verification processes while creating new compliance requirements that demand careful attention from all stakeholders.',
+      'For property buyers, the E-Khata system offers unprecedented transparency into ownership records, tax payment history, and property dimensions. However, the transition has not been without challenges—many older properties require extensive documentation updates before achieving compliance.',
+      'Industry experts recommend initiating E-Khata verification early in any property transaction to avoid delays during registration and loan processing stages.',
     ],
   },
   {
@@ -51,14 +53,14 @@ const ARTICLES: Legacy[] = [
     title: 'Premium FAR Revolution',
     section: 'regulations',
     contentType: 'article',
-    excerpt: 'Karnataka doubles FAR to 2.4 for premium plots, but infrastructure costs make developers hesitant.',
+    excerpt: "Karnataka's New Policy Redefines Bangalore's Skyline and Investment Strategy",
     publishedAt: '2024-01-10',
-    tags: ['far', 'policy', 'bangalore', 'development'],
+    tags: ['far', 'policy', 'bangalore'],
     paragraphs: [
-      'The new policy allows Floor Area Ratio of 2.4 for plots on roads wider than 12 meters, up from the previous 1.2. This theoretically doubles construction potential.',
-      'However, developers must pay premium charges and contribute to infrastructure development. The additional costs range from ₹500-1500 per sq ft depending on location.',
-      "Early adopters in Whitefield and Electronic City report mixed results. While some projects benefit from increased density, others struggle with the financial burden.",
-      'The policy aims to create more housing supply, but market response suggests it may primarily benefit luxury developments rather than affordable housing.',
+      "The Premium Floor Area Ratio scheme, introduced by BBMP in April 2025, fundamentally alters development economics across Bangalore's prime corridors. Under this framework, property owners and developers can acquire additional FAR to construct taller structures in designated zones.",
+      'Eligibility is determined by road width and locality classification, with the premium capped at 40% above base limits. The calculation methodology ties premium costs to property guidance values, ensuring transparent and predictable pricing mechanisms for all stakeholders.',
+      'Rooted in recent amendments to the Karnataka Town and Country Planning Act, this initiative generates significant revenue for urban infrastructure development. However, it substantially impacts project feasibility assessments and property valuations in affected areas.',
+      'Investors should carefully evaluate Premium FAR implications before acquiring properties in eligible zones, as the additional construction potential may significantly enhance—or complicate—development strategies depending on site-specific factors.',
     ],
   },
   {
@@ -66,14 +68,14 @@ const ARTICLES: Legacy[] = [
     title: 'RERA 2025: Buyers First',
     section: 'regulations',
     contentType: 'article',
-    excerpt: 'New RERA amendments give buyers unprecedented power to cancel bookings and claim full refunds.',
+    excerpt: "New Compliance Rules Transform Karnataka's Real Estate Project Registration",
     publishedAt: '2024-01-05',
     tags: ['rera', 'regulations', 'buyer rights'],
     paragraphs: [
-      'The Karnataka RERA has introduced sweeping changes that tilt the balance decisively toward property buyers. Developers now face stricter penalties for project delays.',
-      "Buyers can cancel bookings without penalty if projects are delayed by more than 6 months. Full refund including interest must be processed within 45 days.",
-      'The new rules also mandate quarterly project updates and escrow account transparency. Developers must maintain 70% of buyer funds in dedicated project accounts.',
-      'Industry experts predict this will clean up the market but may increase property prices as developers factor in compliance costs and reduced cash flow flexibility.',
+      "Karnataka's Real Estate Regulatory Authority has implemented comprehensive reforms in 2025, establishing stringent standards for project registration, developer disclosure, and financial accountability across the state.",
+      'All developments exceeding 500 square meters now require mandatory registration, with developers obligated to deposit 70% of buyer funds in designated escrow accounts. Annual audit reports must be filed with the authority, creating unprecedented financial transparency in the sector.',
+      'The enhanced penalty framework addresses defaults and misrepresentation more effectively than previous regulations. Complaint resolution processes have been streamlined with target turnaround times of four months, significantly reducing buyer grievance timelines.',
+      'These measures strengthen buyer protection mechanisms considerably while establishing complete transparency in developer performance tracking through the online portal. Prospective buyers are advised to verify RERA registration status and review developer compliance history before any property commitment.',
     ],
   },
   {
@@ -81,14 +83,14 @@ const ARTICLES: Legacy[] = [
     title: 'Due Diligence Checklist: Avoiding Property Investment Pitfalls',
     section: 'guides',
     contentType: 'guide',
-    excerpt: 'Comprehensive guide to verifying property documents and avoiding common investment mistakes in Bangalore real estate.',
+    excerpt: 'A comprehensive framework for thorough verification before making any property investment decision in Bangalore.',
     publishedAt: '2023-12-28',
     tags: ['due diligence', 'checklist', 'investment'],
     paragraphs: [
-      'Property investment in Bangalore requires thorough verification of multiple documents. Missing even one critical document can lead to legal complications years later.',
-      'Start with the title deed and trace ownership history for at least 30 years. Verify encumbrance certificates, property tax receipts, and approved building plans.',
-      'Check for RERA registration if buying from developers. Verify carpet area calculations and understand the difference between super built-up and actual usable area.',
-      'Engage qualified legal professionals for document verification. The cost of proper due diligence is minimal compared to potential losses from defective titles.',
+      'Rigorous due diligence forms the foundation of sound property investment strategy. This systematic approach encompasses verification of ownership documentation, encumbrance certificate analysis, zoning regulation compliance, and assessment of developer credentials.',
+      'Title chain examination remains the most critical verification step. Ensure continuous ownership records spanning at least 30 years, with particular attention to inheritance transfers, partition deeds, and court settlements that may create future claims.',
+      'Encumbrance certificates should be obtained for the maximum available period, with careful review of any registered mortgages, liens, or pending litigation. RERA registration verification confirms project legitimacy and provides access to approved plans and financial disclosures.',
+      "Beyond documentation, physical verification of property boundaries, existing constructions, and access roads prevents disputes post-purchase. Engaging qualified professionals for legal opinion and technical assessment significantly reduces investment risk in Bangalore's complex real estate environment.",
     ],
   },
 ]
@@ -107,6 +109,20 @@ if (!tenant) throw new Error(`Tenant ${TENANT_SLUG} does not exist`)
 
 const results: any[] = []
 for (const a of ARTICLES) {
+  const data = {
+    title: a.title,
+    slug: a.slug,
+    excerpt: a.excerpt,
+    content: lexical(a.paragraphs.map(para)),
+    tags: a.tags.map((name) => ({ name })),
+    tenant: tenant.id,
+    section: a.section,
+    contentType: a.contentType,
+    publishedAt: new Date(a.publishedAt).toISOString(),
+    authorship: { authorName: 'Zamindarr' },
+    seo: { title: a.title.slice(0, 70), description: a.excerpt.slice(0, 165) },
+    _status: 'published',
+  }
   const existing = await payload.find({
     collection: 'posts',
     where: { AND: [{ slug: { equals: a.slug } }, { tenant: { equals: tenant.id } }] },
@@ -114,30 +130,21 @@ for (const a of ARTICLES) {
     draft: true,
     overrideAccess: true,
   })
-  let document: any = existing.docs[0]
-  let action: 'created' | 'exists' = 'exists'
-  if (!document) {
-    document = await payload.create({
+  let document: any
+  let action: 'created' | 'updated'
+  if (existing.docs[0]) {
+    document = await payload.update({
       collection: 'posts',
-      data: {
-        title: a.title,
-        slug: a.slug,
-        excerpt: a.excerpt,
-        content: lexical(a.paragraphs.map(para)),
-        tags: a.tags.map((name) => ({ name })),
-        tenant: tenant.id,
-        section: a.section,
-        contentType: a.contentType,
-        publishedAt: new Date(a.publishedAt).toISOString(),
-        authorship: { authorName: 'Zamindarr' },
-        seo: { title: a.title.slice(0, 70), description: a.excerpt.slice(0, 165) },
-        _status: 'published',
-      },
+      id: existing.docs[0].id,
+      data,
       locale: 'en',
       draft: false,
       overrideAccess: true,
       req,
     } as any)
+    action = 'updated'
+  } else {
+    document = await payload.create({ collection: 'posts', data, locale: 'en', draft: false, overrideAccess: true, req } as any)
     action = 'created'
   }
   results.push({ action, id: document.id, slug: a.slug, section: a.section, status: document._status })
@@ -145,3 +152,4 @@ for (const a of ARTICLES) {
 
 console.log(JSON.stringify({ tenant: tenant.slug, tenantId: tenant.id, results }, null, 2))
 await payload.destroy()
+process.exit(0)
