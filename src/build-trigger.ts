@@ -1,4 +1,5 @@
 import { tenantIdOf } from './access'
+import { requestTranslation } from './collections/translation-trigger'
 
 /**
  * Per-tenant static rebuild trigger.
@@ -150,6 +151,25 @@ export async function requestRebuildOnPublish({ doc, previousDoc, req }: any) {
   const isPublished = doc?._status === 'published'
   if (!wasPublished && !isPublished) return
   await requestTenantRebuild({ req, doc, previousDoc })
+}
+
+/**
+ * Publish hook: ask the localization pipeline to translate.
+ *
+ * Deliberately does NOT trigger the tenant rebuild — the rebuild is the last step
+ * of the translation flow, so a site never publishes an article whose other
+ * languages are still missing. A non-English publish means a pipeline write
+ * landed; the flow owns the build in that case.
+ */
+export async function requestTranslationOnPublish({ doc, previousDoc, req }: any) {
+  const newlyPublished = doc?._status === 'published' && previousDoc?._status !== 'published'
+  if (!newlyPublished) return
+  try {
+    await requestTranslation({ payload: req.payload, post: doc, reason: 'published' })
+  } catch (error) {
+    // Never let a workflow outage fail an editorial publish.
+    req.payload?.logger?.warn?.(`Translation trigger error for post ${doc?.id}: ${(error as Error).message}`)
+  }
 }
 
 /** Hook wrapper: rebuild after a deletion so removed content leaves the site. */

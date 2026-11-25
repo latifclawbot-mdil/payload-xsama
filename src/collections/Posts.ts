@@ -1,6 +1,10 @@
 import type { CollectionConfig } from 'payload'
 import { editorialRead, enforceTenantRole, tenantWriteAccess } from '../access'
-import { requestRebuildOnDelete, requestRebuildOnPublish } from '../build-trigger'
+import {
+  requestRebuildOnDelete,
+  requestRebuildOnPublish,
+  requestTranslationOnPublish,
+} from '../build-trigger'
 import { richResultFields, seoFields, validateLocalizedCompleteness, preservePublishedUrl } from './content-contract'
 
 const write = tenantWriteAccess('posts')
@@ -17,7 +21,7 @@ export const Posts: CollectionConfig = {
   },
   hooks: {
     beforeChange: [enforceTenantRole(), preservePublishedUrl, validateLocalizedCompleteness],
-    afterChange: [requestRebuildOnPublish],
+    afterChange: [requestRebuildOnPublish, requestTranslationOnPublish],
     afterDelete: [requestRebuildOnDelete],
   },
   fields: [

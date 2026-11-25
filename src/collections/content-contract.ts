@@ -14,6 +14,11 @@ export const BLOG_SECTIONS = [
 
 const sectionOptions = BLOG_SECTIONS.map(([value, label]) => ({ label, value }))
 
+/** Narrowing helper so callers can validate a section against the one list. */
+export function isBlogSection(value: unknown): value is (typeof BLOG_SECTIONS)[number][0] {
+  return BLOG_SECTIONS.some(([section]) => section === value)
+}
+
 /** Fields every published item needs to produce a complete, indexable page. */
 export const seoFields: Field[] = [
   {
@@ -92,9 +97,10 @@ export const richResultFields: Field[] = [
 
 /** Per-locale publication gate: a locale is omitted from builds unless it is complete. */
 export async function validateLocalizedCompleteness({ req, data, originalDoc }: any) {
-  if (data?._status !== 'published') return data
+  const status = data?._status
   const locale = req?.locale
   if (!locale || locale === 'all') return data
+  if (status !== 'published') return data
   const merged = { ...(originalDoc ?? {}), ...(data ?? {}) }
   const problems: string[] = []
   if (!merged.title) problems.push('title')

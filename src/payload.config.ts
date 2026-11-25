@@ -15,6 +15,8 @@ import { Posts } from './collections/Posts'
 import { SiteSettings } from './collections/SiteSettings'
 import { MembershipAudit } from './collections/MembershipAudit'
 import { Tenants } from './collections/Tenants'
+import { translationRequestHandler } from './collections/translation-request-endpoint'
+import { translationsHandler } from './collections/translation-intake'
 import { Users } from './collections/Users'
 import {
   CaseStudies,
@@ -64,6 +66,18 @@ export default buildConfig({
     RegulatoryNotes,
   ],
   editor: lexicalEditor(),
+  endpoints: [
+    {
+      path: '/internal/translations',
+      method: 'post',
+      handler: translationsHandler,
+    },
+    {
+      path: '/internal/pipeline/translation-request',
+      method: 'post',
+      handler: translationRequestHandler,
+    },
+  ],
   secret: process.env.PAYLOAD_SECRET || '',
   serverURL: process.env.PAYLOAD_PUBLIC_SERVER_URL,
   localization: {
