@@ -13,7 +13,7 @@ import type { AddressInfo } from 'node:net'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const { main } = await import('./f_localize_post.ts')
 
-type Call = { method: string; url: string; body: string }
+type Call = { method: string; url: string; body: string; cfAccess?: string | null }
 
 const calls: Call[] = []
 let llmCalls = 0
@@ -33,7 +33,12 @@ const server = createServer((req, res) => {
   let body = ''
   req.on('data', (chunk) => (body += chunk))
   req.on('end', () => {
-    calls.push({ method: req.method ?? '', url: req.url ?? '', body })
+    calls.push({
+      method: req.method ?? '',
+      url: req.url ?? '',
+      body,
+      cfAccess: req.headers['cf-access-client-id'] ?? null,
+    })
     const send = (status: number, value: unknown) => {
       res.writeHead(status, { 'content-type': 'application/json' })
       res.end(JSON.stringify(value))
@@ -108,7 +113,12 @@ await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
 const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`
 
 const litellm = { base_url: base, api_key: 'test-key', model: 'test-model' }
-const payloadResource = { base_url: base, pipeline_token: 'pipeline-token' }
+const payloadResource = {
+  base_url: base,
+  pipeline_token: 'pipeline-token',
+  cf_access_client_id: 'cf-id',
+  cf_access_client_secret: 'cf-secret',
+}
 const builds = { zamindarr: `${base}/build-hook` }
 
 const failures: string[] = []
@@ -144,6 +154,15 @@ expect(buildCalls.length === 1, `build hook should fire exactly once, fired ${bu
 const lastCall = calls[calls.length - 1]
 expect(lastCall.url === '/build-hook', 'build hook must be the final call')
 expect(llmCalls === 2, `expected 2 model calls, got ${llmCalls}`)
+// Without this the request 302s at the Cloudflare Access edge and never reaches Payload.
+expect(
+  intakeCalls.every((call) => call.cfAccess === 'cf-id'),
+  'the translation write must carry the Cloudflare Access service token',
+)
+expect(
+  calls.filter((call) => call.url.includes('/api/tenants')).every((call) => call.cfAccess === 'cf-id'),
+  'the tenant lookup must carry the Cloudflare Access service token',
+)
 
 // --- Failure path: a locale fails, so nothing is built.
 calls.length = 0
@@ -170,7 +189,12 @@ server.on('request', (req, res) => {
   let body = ''
   req.on('data', (chunk) => (body += chunk))
   req.on('end', () => {
-    calls.push({ method: req.method ?? '', url: req.url ?? '', body })
+    calls.push({
+      method: req.method ?? '',
+      url: req.url ?? '',
+      body,
+      cfAccess: req.headers['cf-access-client-id'] ?? null,
+    })
     const send = (status: number, value: unknown) => {
       res.writeHead(status, { 'content-type': 'application/json' })
       res.end(JSON.stringify(value))

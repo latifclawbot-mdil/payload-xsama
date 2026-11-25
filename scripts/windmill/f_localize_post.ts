@@ -3,8 +3,15 @@
 // Windmill: script language `bun` (or `deno`), runs in a worker. Configure the
 // resources named below in the Windmill workspace; nothing secret lives here.
 //
-//   litellm   → { base_url, api_key, model }         user runs the LiteLLM gateway
-//   payload   → { base_url, pipeline_token }         the multi-tenant CMS
+//   litellm   → { base_url, api_key, model }         user runs the LiteLLM gateway.
+//               Verified shape: https://proxy.xsama.org/v1 (Windmill and LiteLLM
+//               are on different docker networks, so the public hostname is the
+//               only route; the container IP times out).
+//   payload   → { base_url, pipeline_token,
+//                 cf_access_client_id?, cf_access_client_secret? }
+//               Every path except GET /api/posts sits behind Cloudflare Access,
+//               so the service token is REQUIRED for the write and the tenant
+//               lookup. GET /api/posts works anonymously.
 //   builds    → { "<tenant-slug>": "<netlify build hook url>", ... }
 //
 // Trigger: Payload POSTs { postId, slug, tenant, targetLocales, idempotencyKey }
@@ -28,7 +35,13 @@ type PostInput = {
 }
 
 type Resource = { base_url: string; api_key: string; model?: string }
-type PayloadResource = { base_url: string; pipeline_token: string }
+type PayloadResource = {
+  base_url: string
+  pipeline_token: string
+  /** Cloudflare Access service token — without it every write 302s to the login. */
+  cf_access_client_id?: string
+  cf_access_client_secret?: string
+}
 
 const LOCALE_NAMES: Record<string, string> = {
   hi: 'Hindi',
@@ -64,10 +77,7 @@ export async function main(
     )
     const response = await fetch(`${payload.base_url}/api/internal/translations`, {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: `Bearer ${payload.pipeline_token}`,
-      },
+      headers: cmsHeaders(payload),
       body: JSON.stringify({ tenant: tenantSlug, posts: translated }),
     })
     if (!response.ok) {
@@ -93,12 +103,27 @@ export async function main(
   return { tenant: tenantSlug, slug: post.slug, written, build: 'triggered' }
 }
 
+/**
+ * Headers for a CMS call. Cloudflare Access wraps content.xsama.org, so the
+ * service token has to ride along or the request 302s to the Access login and
+ * never reaches Payload.
+ */
+function cmsHeaders(payload: PayloadResource, withAuth = true): Record<string, string> {
+  const headers: Record<string, string> = { 'content-type': 'application/json' }
+  if (withAuth) headers.authorization = `Bearer ${payload.pipeline_token}`
+  if (payload.cf_access_client_id && payload.cf_access_client_secret) {
+    headers['CF-Access-Client-Id'] = payload.cf_access_client_id
+    headers['CF-Access-Client-Secret'] = payload.cf_access_client_secret
+  }
+  return headers
+}
+
 /** Accept an id or a slug — the flow is called both from Payload and by hand. */
 async function resolveTenantSlug(tenant: string | number, payload: PayloadResource): Promise<string> {
   if (typeof tenant === 'string' && Number.isNaN(Number(tenant))) return tenant
   const query = `where[id][equals]=${encodeURIComponent(String(tenant))}&limit=1&depth=0`
   const response = await fetch(`${payload.base_url}/api/tenants?${query}`, {
-    headers: { authorization: `Bearer ${payload.pipeline_token}` },
+    headers: cmsHeaders(payload),
   })
   if (!response.ok) throw new Error(`Could not resolve tenant ${tenant}: ${response.status}`)
   const data = (await response.json()) as { docs?: { slug: string }[] }
@@ -204,6 +229,9 @@ async function translateArticle({
     '  {"title":"...","excerpt":"...","seoTitle":"...","seoDescription":"...","tags":["..."],"blocks":[{"p":"..."}|{"h2":"..."}|{"ul":["..."]}]}',
   ].join('\n')
 
+  // Note: the Windmill container has no IPv6 route while DNS answers AAAA first.
+  // `fetch` (undici) does Happy Eyeballs and falls back to IPv4; a client that
+  // does not would hang against these hostnames.
   const response = await fetch(`${litellm.base_url.replace(/\/$/, '')}/v1/chat/completions`, {
     method: 'POST',
     headers: {
